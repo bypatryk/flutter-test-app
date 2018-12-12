@@ -8,19 +8,59 @@ class MyApp extends StatelessWidget {
     Widget build(BuildContext context) {
         return MaterialApp(
             title: 'Welcome to Flutter',
+            theme: new ThemeData(
+                primaryColor: Colors.white,
+            ),
             home: RandomWords(),
         );
     }
 }
 
 class RandomWordsState extends State<RandomWords> {
-    final _suggestions = <WordPair>[];
+    final List<WordPair> _suggestions = <WordPair>[];
+    final Set<WordPair> _saved = new Set<WordPair>();
+
+    void _pushSaved() {
+        Navigator.of(context).push(
+            new MaterialPageRoute(
+                builder: (BuildContext context) {
+                    final Iterable<ListTile> tiles = _saved.map(
+                        (WordPair pair) {
+                            return new ListTile(
+                                title: new Text(pair.asPascalCase),
+                            );
+                        },
+                    );
+
+                    final List<Widget> divided = ListTile
+                        .divideTiles(
+                            context: context,
+                            tiles: tiles,
+                        )
+                        .toList();
+
+                    return new Scaffold(
+                        appBar: new AppBar(
+                            title: new Text('Saved Suggestions'),
+                        ),
+                        body: new ListView(children: divided),
+                    );
+                },
+            ),
+        );
+    }
 
     @override
     Widget build(BuildContext context) {
         return Scaffold(
             appBar: AppBar(
                 title: Text('Startup Name Generator'),
+                actions: <Widget>[
+                    new IconButton(
+                        icon: new Icon(Icons.list),
+                        onPressed: _pushSaved,
+                    ),
+                ],
             ),
             body: _buildSuggestions(),
         );
@@ -28,7 +68,7 @@ class RandomWordsState extends State<RandomWords> {
 
     Widget _buildSuggestions() {
         return ListView.builder(
-            padding: const EdgeInsets.all(16.0),
+            // padding: const EdgeInsets.all(16.0),
             itemBuilder: (context, index) {
                 if (index.isOdd) return Divider();
 
@@ -44,8 +84,23 @@ class RandomWordsState extends State<RandomWords> {
     }
 
     Widget _buildRow(WordPair pair) {
+        final bool alreadySaved = _saved.contains(pair);
+
         return ListTile(
             title: Text(pair.asPascalCase),
+            trailing: new Icon(
+                alreadySaved ? Icons.favorite : Icons.favorite_border,
+                color: alreadySaved ? Colors.red : null,
+            ),
+            onTap: () {
+                setState(() {
+                    if (alreadySaved) {
+                        _saved.remove(pair);
+                    } else {
+                        _saved.add(pair);
+                    }
+                });
+            }
         );
     }
 }
